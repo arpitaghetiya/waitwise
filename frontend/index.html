@@ -1,576 +1,1351 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WaitWise | AI Commute Intelligence</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #050505;
-            --surface-color: rgba(25, 25, 25, 0.6);
-            --surface-border: rgba(255, 255, 255, 0.08);
-            --text-primary: #ededed;
-            --text-secondary: #a1a1aa;
-            --brand-color: #3b82f6;
-            --brand-glow: rgba(59, 130, 246, 0.3);
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --panel-radius: 16px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WaitWise | Should I board or wait?</title>
+  <meta name="description" content="WaitWise helps you avoid crowded buses and save time on your daily commute.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400&family=Syne:wght@600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #04040A;
+      --bg-surface: #0C0C14;
+      --bg-elevated: #13131E;
+      --bg-card: #16161F;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-active: rgba(255, 255, 255, 0.15);
+      --accent-wait: #A78BFA;
+      --accent-board: #34D399;
+      --accent-danger: #F87171;
+      --text-primary: #F1F0FF;
+      --text-secondary: #8B8BA7;
+      --text-muted: #4A4A6A;
+      --glow-wait: rgba(167, 139, 250, 0.15);
+      --glow-board: rgba(52, 211, 153, 0.15);
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
+      --font-hero: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
-            background-image: radial-gradient(circle at 50% 0%, rgba(20, 30, 50, 0.5) 0%, transparent 60%);
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        main {
-            width: 100%;
-            max-width: 800px;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-        header {
-            text-align: center;
-            margin-bottom: 24px;
-        }
+    /* SKIP LINK */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--accent-wait);
+      color: #04040A;
+      padding: 8px 16px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 100;
+      transition: top 0.2s;
+    }
 
-        header h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 8px;
-            background: linear-gradient(to right, #ffffff, #a1a1aa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    .skip-link:focus {
+      top: 0;
+    }
 
-        header p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 52px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(4, 4, 10, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 50;
+    }
 
-        .panel {
-            background: var(--surface-color);
-            border: 1px solid var(--surface-border);
-            border-radius: var(--panel-radius);
-            padding: 24px;
-            backdrop-filter: blur(12px);
-            opacity: 1;
-        }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        /* Form */
-        form {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px;
-        }
+    .pulse-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent-wait);
+      animation: pulse 2s ease-in-out infinite;
+      aria-hidden: true;
+    }
 
-        @media (max-width: 600px) {
-            form { grid-template-columns: 1fr; }
-        }
+    .header-title {
+      font-family: var(--font-hero);
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
 
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+    .header-right {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
 
-        .input-group label {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+    @keyframes pulse {
 
-        input {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--surface-border);
-            border-radius: 8px;
-            padding: 12px 16px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            outline: none;
-        }
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
 
-        /* Hide clock icon in webkit */
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            opacity: 0.6;
-            cursor: pointer;
-        }
+      50% {
+        opacity: 0.4;
+        transform: scale(1.6);
+      }
+    }
 
-        input:focus {
-            border-color: var(--brand-color);
-            box-shadow: 0 0 0 3px var(--brand-glow);
-        }
+    /* PAGE FRAME */
+    main {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px 80px 24px;
+      flex: 1;
+    }
 
-        button {
-            grid-column: 1 / -1;
-            background: var(--brand-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 14px var(--brand-glow);
-            margin-top: 8px;
-        }
+    /* PROBLEM STATEMENT */
+    .problem-statement {
+      text-align: center;
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      letter-spacing: 0.01em;
+    }
 
-        button:hover:not(:disabled) {
-            transform: translateY(-1px);
-            background: #2563eb;
-            box-shadow: 0 6px 20px var(--brand-glow);
-        }
+    /* INPUT SECTION */
+    #input-view {
+      max-width: 520px;
+      margin: 0 auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 36px;
+      transition: opacity 0.3s ease;
+    }
 
-        button:active:not(:disabled) {
-            transform: translateY(1px);
-        }
+    .eyebrow {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      text-align: center;
+    }
 
-        button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
+    .input-wrapper {
+      margin-bottom: 12px;
+    }
 
-        /* Loading State */
-        #loader-container {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 0;
-            min-height: 200px;
-        }
+    .input-wrapper label {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--brand-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
+    input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      height: 48px;
+      padding: 0 16px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
 
-        #loader-msgs {
-            height: 20px;
-            overflow: hidden;
-            position: relative;
-            text-align: center;
-            width: 100%;
-        }
+    input::placeholder {
+      color: var(--text-muted);
+    }
 
-        .loader-msg {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            font-weight: 500;
-            position: absolute;
-            width: 100%;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.4s ease;
-        }
+    input:focus {
+      border-color: var(--border-active);
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+    }
 
-        .loader-msg.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(0.5);
+      cursor: pointer;
+    }
 
-        /* Results Panels */
-        #results-container {
-            display: none;
-            flex-direction: column;
-            gap: 20px;
-        }
+    .cta-button {
+      width: 100%;
+      height: 52px;
+      background: var(--accent-wait);
+      color: #04040A;
+      font-family: var(--font-hero);
+      font-weight: 600;
+      font-size: 15px;
+      border-radius: 12px;
+      letter-spacing: 0.02em;
+      border: none;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
 
-        .animate-in {
-            animation: slideFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
+    .cta-button:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
 
-        /* Multi-Panel Grid for Top Data */
-        .verdict-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 600px) {
-            .verdict-grid { grid-template-columns: 1fr; }
-        }
+    .cta-button:active {
+      transform: translateY(0);
+    }
 
-        /* Panel 2: Vehicles List */
-        .vehicles-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+    .cta-button:focus-visible {
+      outline: 2px solid var(--accent-wait);
+      outline-offset: 3px;
+    }
 
-        .vehicle-item {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            position: relative;
-            overflow: hidden;
-        }
+    @keyframes shake {
 
-        .vehicle-item.recommended {
-            border-color: var(--success);
-            background: rgba(16, 185, 129, 0.05);
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.05);
-        }
+      0%,
+      100% {
+        transform: translateX(0);
+      }
 
-        .veh-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      25% {
+        transform: translateX(-4px);
+      }
 
-        .veh-title {
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+      75% {
+        transform: translateX(4px);
+      }
+    }
 
-        .badge {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-        }
+    .shake {
+      animation: shake 0.3s linear;
+    }
 
-        .badge-success { background: rgba(16,185,129,0.15); color: #34d399; }
-        .badge-warning { background: rgba(245,158,11,0.15); color: #fbbf24; }
-        .badge-danger { background: rgba(239,68,68,0.15); color: #f87171; }
+    /* GOOGLE MAPS BUTTON */
+    .maps-btn-wrapper {
+      margin-top: 16px;
+      text-align: center;
+    }
 
-        .veh-meta {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            display: flex;
-            gap: 16px;
-        }
+    .maps-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
 
-        .progress-bg {
-            height: 6px;
-            width: 100%;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
+    .maps-btn:hover {
+      border-color: var(--border-active);
+      color: var(--text-primary);
+    }
 
-        .progress-bar {
-            height: 100%;
-            width: 0%; /* Initial state for animation */
-            border-radius: 8px;
-            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s;
-        }
+    .maps-btn:focus-visible {
+      outline: 2px solid var(--accent-wait);
+      outline-offset: 3px;
+    }
 
-        /* Panel 4: Neural Reasoning */
-        .reasoning-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .reasoning-item {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            color: #d4d4d8;
-        }
+    .maps-btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
 
-        .reasoning-item::before {
-            content: '';
-            display: block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--brand-color);
-            margin-top: 8px;
-            flex-shrink: 0;
-            box-shadow: 0 0 8px var(--brand-color);
-        }
+    .maps-location-hint {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-align: center;
+    }
 
-        /* Animations */
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes slideFadeUp {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
+    /* AI THINKING LOADER */
+    #loader-view {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 320px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
 
-        /* Utilities */
-        .txt-success { color: #34d399; }
-        .txt-warning { color: #fbbf24; }
-        .txt-danger { color: #f87171; }
-        .text-sm { font-size: 0.85rem; }
-        .text-3xl { font-size: 2rem; font-weight: 700; margin-top: 4px; }
-        .text-gray { color: var(--text-secondary); }
-        .mb-4 { margin-bottom: 16px; }
+    .waveform {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      height: 28px;
+      margin-bottom: 24px;
+    }
 
-        /* Error state */
-        #error-msg {
-            color: var(--danger);
-            display: none;
-            text-align: center;
-            padding: 16px;
-            background: rgba(239, 68, 68, 0.1);
-            border-radius: var(--panel-radius);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-    </style>
+    .wave-bar {
+      width: 3px;
+      height: 8px;
+      background: var(--accent-wait);
+      border-radius: 2px;
+      animation: wave 1s ease-in-out infinite;
+    }
+
+    .wave-bar:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .wave-bar:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .wave-bar:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes wave {
+
+      0%,
+      100% {
+        height: 8px;
+      }
+
+      50% {
+        height: 28px;
+      }
+    }
+
+    #loader-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      transition: opacity 0.3s ease;
+    }
+
+    /* RESULTS SECTION */
+    #results-view {
+      display: none;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    @keyframes fadeSlideUp {
+      0% {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stagger-enter {
+      opacity: 0;
+      animation: fadeSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      margin-bottom: 28px;
+    }
+
+    .delay-0 {
+      animation-delay: 0ms;
+    }
+
+    .delay-1 {
+      animation-delay: 120ms;
+    }
+
+    .delay-2 {
+      animation-delay: 240ms;
+    }
+
+    .delay-3 {
+      animation-delay: 360ms;
+    }
+
+    .delay-4 {
+      animation-delay: 480ms;
+    }
+
+    /* VERDICT PANEL */
+    #panel-a {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 48px 40px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      margin-bottom: 36px;
+      z-index: 1;
+    }
+
+    .verdict-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    #big-verdict {
+      font-family: var(--font-hero);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .glow-wait::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(167, 139, 250, 0.18), transparent 70%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    .glow-board::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(52, 211, 153, 0.18), transparent 70%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    #human-summary {
+      font-family: var(--font-body);
+      font-size: 17px;
+      margin-top: 16px;
+      letter-spacing: -0.01em;
+      font-weight: 500;
+    }
+
+    #emotional-insight {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-style: italic;
+      color: var(--text-muted);
+      margin-top: 8px;
+      opacity: 0.7;
+    }
+
+    /* IMPACT PANEL */
+    .impact-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 32px;
+    }
+
+    .impact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .impact-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .impact-icon-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .impact-icon {
+      font-size: 14px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .impact-value {
+      font-family: var(--font-hero);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .impact-sub {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .payoff-wrapper {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+    }
+
+    .payoff-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .payoff-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .payoff-bar-bg {
+      flex: 1;
+      height: 4px;
+      background: var(--bg-elevated);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .payoff-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 2px;
+      transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #payoff-score {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* SECTION LABELS */
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    /* VEHICLES GRID */
+    #vehicles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .veh-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px 20px;
+      position: relative;
+    }
+
+    .veh-badge {
+      position: absolute;
+      top: 0;
+      right: 16px;
+      padding: 4px 12px;
+      border-radius: 0 0 10px 10px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: #04040A;
+    }
+
+    .veh-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .veh-name {
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .veh-time {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .veh-score-big {
+      font-family: var(--font-hero);
+      font-weight: 700;
+      font-size: 42px;
+      line-height: 1;
+    }
+
+    .veh-score-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .veh-bar-bg {
+      height: 3px;
+      background: var(--bg-elevated);
+      border-radius: 1.5px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .veh-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 1.5px;
+      transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .veh-tag {
+      font-family: var(--font-body);
+      font-size: 12px;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* REASONING */
+    #panel-c {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    .reasoning-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .reasoning-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .reasoning-row:first-child {
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .reasoning-index {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .reasoning-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* COMFORT COMPARISON */
+    .stress-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stress-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .stress-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .stress-value {
+      font-family: var(--font-hero);
+      font-weight: 700;
+      font-size: 36px;
+    }
+
+    .stress-subtext {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    /* RESET LINK */
+    .reset-link {
+      display: block;
+      text-align: center;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      margin-top: 40px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+      background: none;
+      border: none;
+      width: 100%;
+    }
+
+    .reset-link:hover {
+      color: var(--text-primary);
+    }
+
+    .reset-link:focus-visible {
+      outline: 2px solid var(--accent-wait);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    /* ERROR STATE */
+    #error-view {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .error-icon {
+      font-size: 32px;
+    }
+
+    .error-title {
+      font-family: var(--font-hero);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-danger);
+    }
+
+    .error-message {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 360px;
+    }
+
+    .error-retry {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .error-retry:hover {
+      border-color: var(--border-active);
+    }
+
+    .error-retry:focus-visible {
+      outline: 2px solid var(--accent-wait);
+      outline-offset: 3px;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      margin-top: auto;
+    }
+
+    .footer-line {
+      width: 100%;
+      max-width: 120px;
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 0 auto 20px auto;
+    }
+
+    footer p {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 600px) {
+      #input-view {
+        padding: 24px;
+      }
+
+      .stress-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #vehicles-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #panel-a {
+        padding: 32px 24px;
+      }
+
+      .impact-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-    <main>
-        <header>
-            <h1>WaitWise</h1>
-            <p>AI boarding intelligence for urban commuters.</p>
-        </header>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
-        <form id="analyze-form" class="panel">
-            <div class="input-group">
-                <label for="stop">Transit Stop</label>
-                <input type="text" id="stop" placeholder="e.g. MG Road Metro" required>
-            </div>
-            <div class="input-group">
-                <label for="route">Route ID</label>
-                <input type="text" id="route" placeholder="e.g. Green Line Bus 47" required>
-            </div>
-            <div class="input-group">
-                <label for="time">Commute Time</label>
-                <input type="time" id="time" required>
-            </div>
-            <button type="submit" id="submit-btn" aria-live="polite">Analyze Next Vehicles</button>
-        </form>
+  <header role="banner">
+    <div class="header-left">
+      <div class="pulse-dot" aria-hidden="true"></div>
+      <div class="header-title">WaitWise</div>
+    </div>
+    <div class="header-right" aria-label="Tagline">AI that tells you when NOT to board</div>
+  </header>
 
-        <div id="error-msg"></div>
+  <main id="main-content">
 
-        <div id="loader-container">
-            <div class="spinner"></div>
-            <div id="loader-msgs">
-                <div class="loader-msg" id="msg-1">Fetching live telemetry from transit nodes...</div>
-                <div class="loader-msg" id="msg-2">Analyzing passenger density vectors...</div>
-                <div class="loader-msg" id="msg-3">Computing patience payoff matrices...</div>
+    <p class="problem-statement" aria-label="About this tool">
+      Helps you avoid crowded buses and save time on your daily commute.
+    </p>
+
+    <!-- INPUT UI -->
+    <div id="input-view" role="region" aria-label="Journey details form">
+      <span class="eyebrow" aria-hidden="true">WHERE ARE YOU?</span>
+      <form id="decision-form" novalidate>
+        <div class="input-wrapper">
+          <label for="stop">Stop name or ID</label>
+          <input type="text" id="stop" name="stop" placeholder="e.g. MG Road Metro" value="MG Road Metro" required
+            autocomplete="off" aria-required="true">
+        </div>
+        <div class="input-wrapper">
+          <label for="route">Route or line</label>
+          <input type="text" id="route" name="route" placeholder="e.g. Green Line 47" value="Green Line 47" required
+            autocomplete="off" aria-required="true">
+        </div>
+        <div class="input-wrapper">
+          <label for="time">Current time</label>
+          <input type="time" id="time" name="time" required aria-required="true">
+        </div>
+        <button type="submit" class="cta-button" id="btn-submit" aria-label="Analyze my boarding window">
+          Should I board? &rarr;
+        </button>
+      </form>
+
+      <div class="maps-btn-wrapper">
+        <button class="maps-btn" id="maps-btn" aria-label="Open this stop location in Google Maps">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          Open in Google Maps
+        </button>
+        <span class="maps-location-hint" id="maps-location-hint" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <!-- LOADER UI -->
+    <div id="loader-view" role="status" aria-live="polite" aria-label="Loading boarding recommendation">
+      <div class="waveform" aria-hidden="true">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+      </div>
+      <div id="loader-text">Checking crowd levels...</div>
+    </div>
+
+    <!-- ERROR UI -->
+    <div id="error-view" role="alert" aria-live="assertive">
+      <div class="error-icon" aria-hidden="true">⚠</div>
+      <div class="error-title">Something went wrong</div>
+      <div class="error-message" id="error-message">
+        Could not connect to the service. Please check that the backend is running and try again.
+      </div>
+      <button class="error-retry" id="error-retry-btn" aria-label="Try again">Try again</button>
+    </div>
+
+    <!-- RESULTS UI -->
+    <div id="results-view" role="status" aria-live="polite" aria-label="Your boarding recommendation">
+
+      <!-- Verdict Card -->
+      <div id="panel-a" class="stagger-enter delay-0">
+        <span class="verdict-eyebrow" aria-hidden="true">WHAT SHOULD YOU DO?</span>
+        <div id="big-verdict" role="heading" aria-level="1"></div>
+        <div id="human-summary"></div>
+        <div id="emotional-insight"></div>
+      </div>
+
+      <!-- Impact Metrics -->
+      <div id="panel-impact" class="stagger-enter delay-1 impact-panel" role="region" aria-label="Key travel details">
+        <div class="impact-grid">
+          <div class="impact-item">
+            <div class="impact-icon-label">
+              <span class="impact-icon" aria-label="Time saved icon" role="img">&#9203;</span>
+              Time saved
             </div>
+            <div class="impact-value" id="impact-time-saved">--</div>
+            <div class="impact-sub">by choosing wisely</div>
+          </div>
+          <div class="impact-item">
+            <div class="impact-icon-label">
+              <span class="impact-icon" aria-label="Comfort icon" role="img">&#128564;</span>
+              Comfort level
+            </div>
+            <div class="impact-value" id="impact-comfort">--</div>
+            <div class="impact-sub">out of 10</div>
+          </div>
+          <div class="payoff-wrapper">
+            <div class="payoff-label">
+              <span class="impact-icon" aria-label="Worth the wait icon" role="img">&#128694;</span>
+              Worth the wait?
+            </div>
+            <div class="payoff-row">
+              <div class="payoff-bar-bg" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="payoff-progress"
+                aria-label="Patience payoff score">
+                <div id="payoff-fill" class="payoff-bar-fill"></div>
+              </div>
+              <div id="payoff-score" aria-label="Score">0/100</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reasoning -->
+      <div class="stagger-enter delay-2" role="region" aria-label="Why we suggest this">
+        <span class="section-label">Why we suggest this</span>
+        <div id="panel-c">
+          <div class="reasoning-list" id="reasoning-list"></div>
+        </div>
+      </div>
+
+      <!-- Vehicle Cards -->
+      <div class="stagger-enter delay-3" role="region" aria-label="Upcoming vehicles">
+        <span class="section-label">NEXT VEHICLES</span>
+        <div id="vehicles-grid"></div>
+      </div>
+
+      <!-- Comfort Comparison -->
+      <div class="stagger-enter delay-4" role="region" aria-label="Comfort comparison">
+        <span class="section-label">If you board now vs. if you wait</span>
+        <div class="stress-grid">
+          <div class="stress-card">
+            <span class="stress-label">IF YOU BOARD NOW</span>
+            <div id="stress-now" class="stress-value">--</div>
+            <div class="stress-subtext">
+              <span aria-hidden="true">&#128683;</span>
+              Crowd level / 10
+            </div>
+          </div>
+          <div class="stress-card">
+            <span class="stress-label" id="stress-wait-lbl">IF YOU WAIT</span>
+            <div id="stress-wait" class="stress-value">--</div>
+            <div class="stress-subtext">
+              <span aria-hidden="true">&#128515;</span>
+              Crowd level / 10
+            </div>
+          </div>
         </div>
 
-        <div id="results-container">
-            <!-- Dynamically populated panels -->
-        </div>
+        <button class="reset-link" id="reset-btn" aria-label="Go back and analyze another stop">
+          &larr; Analyze another stop
+        </button>
+      </div>
 
-    </main>
+    </div>
+  </main>
 
-    <script>
-        // Set default time to current time
-        const timeInput = document.getElementById('time');
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        timeInput.value = `${hours}:${minutes}`;
+  <footer role="contentinfo">
+    <div class="footer-line" aria-hidden="true"></div>
+    <p>WaitWise &middot; AI Boarding Intelligence &middot; Demo build &middot; Data simulated</p>
+  </footer>
 
-        document.getElementById('analyze-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const stop = document.getElementById('stop').value;
-            const route = document.getElementById('route').value;
-            const time = document.getElementById('time').value;
+  <script>
+    const API_URL = 'http://localhost:3000/api/analyze';
 
-            const submitBtn = document.getElementById('submit-btn');
-            const errorMsg = document.getElementById('error-msg');
-            const loaderContainer = document.getElementById('loader-container');
-            const resultsContainer = document.getElementById('results-container');
+    const inputView = document.getElementById('input-view');
+    const loaderView = document.getElementById('loader-view');
+    const resultsView = document.getElementById('results-view');
+    const errorView = document.getElementById('error-view');
+    const loaderText = document.getElementById('loader-text');
+    const mapsBtn = document.getElementById('maps-btn');
+    const mapsHint = document.getElementById('maps-location-hint');
 
-            // Reset UI
-            errorMsg.style.display = 'none';
-            resultsContainer.style.display = 'none';
-            resultsContainer.innerHTML = '';
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Analyzing Data...';
-            loaderContainer.style.display = 'flex';
+    let loaderInterval = null;
 
-            // Loading state staggered messages (ensure feeling alive)
-            const msg1 = document.getElementById('msg-1');
-            const msg2 = document.getElementById('msg-2');
-            const msg3 = document.getElementById('msg-3');
+    // Set current time on load
+    document.getElementById('time').value = new Date().toTimeString().slice(0, 5);
 
-            msg1.classList.remove('active');
-            msg2.classList.remove('active');
-            msg3.classList.remove('active');
+    // Google Maps button behaviour
+    (function initMapsButton() {
+      let usingGeo = false;
 
-            setTimeout(() => msg1.classList.add('active'), 0);
-            setTimeout(() => { msg1.classList.remove('active'); msg2.classList.add('active'); }, 600);
-            setTimeout(() => { msg2.classList.remove('active'); msg3.classList.add('active'); }, 1400);
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          () => {
+            usingGeo = true;
+            mapsHint.textContent = 'Using your current location';
+          },
+          () => {
+            mapsHint.textContent = '';
+          }
+        );
+      }
 
-            try {
-                // Determine API URL based on host
-                const apiUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                    ? 'http://localhost:3000/api/analyze' 
-                    : '/api/analyze'; 
-                // Fallback direct for testing, waitwise logic applies here
-                const finalUrl = 'http://localhost:3000/api/analyze';
+      mapsBtn.addEventListener('click', () => {
+        const stopVal = document.getElementById('stop').value.trim() || 'bus stop';
+        const query = encodeURIComponent(stopVal);
+        window.open('https://www.google.com/maps/search/' + query, '_blank', 'noopener noreferrer');
+      });
+    })();
 
-                const response = await fetch(finalUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stop, route, time })
-                });
+    // Form submission
+    document.getElementById('decision-form').addEventListener('submit', (e) => {
+      e.preventDefault();
 
-                if (!response.ok) {
-                    throw new Error('Failed to analyze commute details.');
-                }
+      const stopVal = document.getElementById('stop').value.trim();
+      const routeVal = document.getElementById('route').value.trim();
+      const timeVal = document.getElementById('time').value;
 
-                const data = await response.json();
+      if (!stopVal || !routeVal || !timeVal) {
+        document.querySelectorAll('input').forEach((input) => {
+          if (!input.value) {
+            input.classList.add('shake');
+            setTimeout(() => input.classList.remove('shake'), 300);
+          }
+        });
+        return;
+      }
 
-                // Wait 2000ms total to allow all 3 loader messages to show and feel intelligent
-                setTimeout(() => {
-                    loaderContainer.style.display = 'none';
-                    renderResults(data);
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = 'Run Analysis Again';
-                }, 2000);
+      startAnalysis(stopVal, routeVal, timeVal);
+    });
 
-            } catch (error) {
-                loaderContainer.style.display = 'none';
-                errorMsg.innerText = error.message || 'An error occurred fetching data from backend.';
-                errorMsg.style.display = 'block';
-                submitBtn.disabled = false;
-                submitBtn.innerText = 'Analyze Next Vehicles';
+    // Reset button
+    document.getElementById('reset-btn').addEventListener('click', resetUI);
+    document.getElementById('error-retry-btn').addEventListener('click', resetUI);
+
+    function startAnalysis(stop, route, time) {
+      inputView.style.opacity = '0';
+
+      setTimeout(() => {
+        inputView.style.display = 'none';
+        errorView.style.display = 'none';
+
+        loaderView.style.display = 'flex';
+        setTimeout(() => { loaderView.style.opacity = '1'; }, 50);
+
+        // Cycle loading messages every 1.2s
+        const messages = [
+          'Checking crowd levels...',
+          'Finding a better option...',
+          'Analyzing your travel comfort...',
+        ];
+        let msgIndex = 0;
+        loaderText.textContent = messages[0];
+
+        loaderInterval = setInterval(() => {
+          msgIndex = (msgIndex + 1) % messages.length;
+          loaderText.textContent = messages[msgIndex];
+        }, 1200);
+
+        // Fetch after brief pause for UX
+        setTimeout(async () => {
+          try {
+            const res = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ stop, route, time }),
+            });
+
+            if (!res.ok) {
+              throw new Error(`Server returned ${res.status}`);
             }
+
+            const data = await res.json();
+            clearInterval(loaderInterval);
+            loaderInterval = null;
+            renderResults(data);
+          } catch (err) {
+            clearInterval(loaderInterval);
+            loaderInterval = null;
+            showError('Could not reach the boarding service. Make sure the backend is running on port 3000 and try again.');
+          }
+        }, 1400);
+
+      }, 300);
+    }
+
+    function showError(message) {
+      loaderView.style.opacity = '0';
+      setTimeout(() => {
+        loaderView.style.display = 'none';
+        document.getElementById('error-message').textContent = message;
+        errorView.style.display = 'flex';
+      }, 400);
+    }
+
+    function typewrite(element, text, speed = 60) {
+      element.textContent = '';
+      let i = 0;
+      const timer = setInterval(() => {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+        } else {
+          clearInterval(timer);
+        }
+      }, speed);
+    }
+
+    function getColorByScore(score) {
+      if (score < 40) return 'var(--accent-board)';
+      if (score <= 70) return '#FBBF24';
+      return 'var(--accent-danger)';
+    }
+
+    function formatSeconds(secs) {
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      if (m === 0) return `${s}s`;
+      return s === 0 ? `${m}m` : `${m}m ${s}s`;
+    }
+
+    function renderResults(data) {
+      loaderView.style.opacity = '0';
+
+      setTimeout(() => {
+        loaderView.style.display = 'none';
+
+        const panelA = document.getElementById('panel-a');
+        const bigVerdict = document.getElementById('big-verdict');
+        const hSummary = document.getElementById('human-summary');
+        const emoInsight = document.getElementById('emotional-insight');
+        const isWait = data.verdict === 'WAIT';
+        const vColor = isWait ? 'var(--accent-wait)' : 'var(--accent-board)';
+
+        // Verdict panel glow
+        panelA.classList.remove('glow-wait', 'glow-board');
+        panelA.classList.add(isWait ? 'glow-wait' : 'glow-board');
+
+        // Big verdict text
+        bigVerdict.style.color = vColor;
+        bigVerdict.style.fontSize = window.innerWidth <= 600
+          ? (isWait ? '64px' : '48px')
+          : (isWait ? '88px' : '72px');
+
+        typewrite(bigVerdict, isWait ? 'WAIT.' : 'BOARD NOW.');
+
+        // Human-readable impact summary
+        hSummary.style.color = vColor;
+        hSummary.style.opacity = '0.85';
+        hSummary.textContent = isWait
+          ? `Wait ${data.waitSeconds} seconds — this helps you avoid the crowd and save time`
+          : 'Board now — this bus is less crowded and easier to enter';
+
+        // Emotional insight
+        emoInsight.textContent = isWait
+          ? 'Boarding now increases your crowd level significantly. Let it pass.'
+          : 'Delaying now may cost you time and comfort. This window closes fast.';
+
+        // Impact metrics
+        const vRec = data.vehicles.find(v => v.recommended) || data.vehicles[1];
+        document.getElementById('impact-time-saved').textContent = formatSeconds(data.timeSavedSeconds);
+        document.getElementById('impact-time-saved').style.color = vColor;
+        document.getElementById('impact-comfort').textContent = vRec.stressIndex.toFixed(1);
+        document.getElementById('impact-comfort').style.color = getColorByScore(vRec.crowdScore);
+
+        // Payoff bar
+        const pFill = document.getElementById('payoff-fill');
+        const pScore = document.getElementById('payoff-score');
+        const progress = document.getElementById('payoff-progress');
+        pFill.style.background = vColor;
+        pFill.style.width = '0%';
+        pScore.textContent = `${data.patiencePayoff}/100`;
+        progress.setAttribute('aria-valuenow', data.patiencePayoff);
+
+        // Vehicle cards
+        const vGrid = document.getElementById('vehicles-grid');
+        vGrid.innerHTML = data.vehicles.map(v => {
+          const scoreColor = getColorByScore(v.crowdScore);
+          let borderColor = 'rgba(255,255,255,0.06)';
+          let badgeHtml = '';
+
+          if (v.recommended) {
+            const bdColor = isWait ? 'var(--accent-wait)' : 'var(--accent-board)';
+            borderColor = `rgba(${isWait ? '167, 139, 250' : '52, 211, 153'}, 0.6)`;
+            badgeHtml = `<div class="veh-badge" style="background: ${bdColor}" aria-label="Best choice vehicle">BEST CHOICE</div>`;
+          }
+
+          const tagLabel = v.tag === 'Comfortable'
+            ? 'Easier to get in'
+            : v.tag === 'Moderate'
+              ? 'Moderate'
+              : 'Crowded';
+
+          const tagIcon = v.tag === 'Comfortable'
+            ? '&#128694;'
+            : v.tag === 'Moderate'
+              ? '&#128528;'
+              : '&#128683;';
+
+          return `
+        <article class="veh-card" style="border-color: ${borderColor}" aria-label="${v.label}, arrives in ${v.arrivesInMin} minutes, crowd load ${v.crowdScore}%">
+          ${badgeHtml}
+          <div class="veh-header">
+            <div class="veh-name">${v.label}</div>
+            <div class="veh-time" aria-label="Arrives in ${v.arrivesInMin} minutes">in ${v.arrivesInMin} min</div>
+          </div>
+          <div class="veh-score-big" style="color: ${scoreColor}" aria-label="Crowd load ${v.crowdScore} percent">${v.crowdScore}%</div>
+          <div class="veh-score-label">
+            <span aria-hidden="true">&#128683;</span>
+            <span>Crowd load</span>
+          </div>
+          <div class="veh-bar-bg" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${v.crowdScore}" aria-label="Crowd level">
+            <div class="veh-bar-fill" style="background: ${scoreColor}" data-target="${v.crowdScore}%"></div>
+          </div>
+          <div class="veh-tag" style="color: ${scoreColor}" aria-label="${tagLabel}">
+            <span aria-hidden="true">${tagIcon}</span>
+            ${tagLabel}
+          </div>
+        </article>
+      `;
+        }).join('');
+
+        // Reasoning
+        const rList = document.getElementById('reasoning-list');
+        rList.innerHTML = data.reasoning.map((r, i) => `
+      <div class="reasoning-row">
+        <div class="reasoning-index" aria-hidden="true">0${i + 1}</div>
+        <div class="reasoning-text">${r}</div>
+      </div>
+    `).join('');
+
+        // Comfort comparison
+        const vNow = data.vehicles[0];
+
+        const sNow = document.getElementById('stress-now');
+        const sWait = document.getElementById('stress-wait');
+        const sLbl = document.getElementById('stress-wait-lbl');
+
+        sNow.textContent = vNow.stressIndex.toFixed(1);
+        sNow.style.color = getColorByScore(vNow.crowdScore);
+        sWait.textContent = vRec.stressIndex.toFixed(1);
+        sWait.style.color = getColorByScore(vRec.crowdScore);
+        sLbl.textContent = `IF YOU TAKE ${vRec.label.toUpperCase()}`;
+
+        // Show results
+        resultsView.style.display = 'flex';
+
+        // Trigger bar animations
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            pFill.style.width = `${data.patiencePayoff}%`;
+            document.querySelectorAll('.veh-bar-fill').forEach(bar => {
+              bar.style.width = bar.getAttribute('data-target');
+            });
+          }, 100);
         });
 
-        function getColorClass(tag) {
-            if (tag === 'Comfortable') return 'success';
-            if (tag === 'Moderate') return 'warning';
-            return 'danger';
-        }
+      }, 400);
+    }
 
-        function getHexColor(tag) {
-            if (tag === 'Comfortable') return '#34d399';
-            if (tag === 'Moderate') return '#fbbf24';
-            return '#f87171';
-        }
-
-        function renderResults(data) {
-            const resultsContainer = document.getElementById('results-container');
-            
-            const verdictColor = data.verdict === 'WAIT' ? 'var(--warning)' : 'var(--success)';
-
-            // Panel 1 & 2: Verdict & Patience Payoff
-            const topPanels = `
-                <div class="verdict-grid">
-                    <div class="panel animate-in">
-                        <span class="text-sm text-gray font-bold uppercase tracking-wider">Recommendation</span>
-                        <div class="text-3xl" style="color: ${verdictColor}">${data.verdict}</div>
-                        <div class="text-sm text-gray mt-1">${data.verdict === 'WAIT' ? `Wait ${data.waitSeconds} seconds for optimal vehicle` : 'Board the arriving vehicle immediately'}</div>
-                    </div>
-                    <div class="panel animate-in delay-1">
-                        <span class="text-sm text-gray font-bold uppercase tracking-wider">Patience Payoff</span>
-                        <div class="text-3xl txt-success">${data.patiencePayoff}<span style="font-size: 1.2rem; color: var(--text-secondary)">/100</span></div>
-                        <div class="text-sm text-gray mt-1">Saves est. ${data.timeSavedSeconds}s in entry/exit friction</div>
-                    </div>
-                </div>
-            `;
-
-            // Panel 3: Live Telemetry
-            const vehiclesHtml = data.vehicles.map(v => `
-                <div class="vehicle-item ${v.recommended ? 'recommended' : ''}">
-                    <div class="veh-header">
-                        <span class="veh-title">
-                            ${v.label} 
-                            ${v.recommended ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>` : ''}
-                        </span>
-                        <span class="badge badge-${getColorClass(v.tag)}">${v.tag}</span>
-                    </div>
-                    <div class="veh-meta">
-                        <span>Arr: ${v.arrivesInMin}m</span>
-                        <span>Dense: ${v.crowdScore}%</span>
-                        <span>Stress Ix: ${v.stressIndex}</span>
-                    </div>
-                    <div class="progress-bg">
-                        <div class="progress-bar" style="background: ${getHexColor(v.tag)};" data-target="${v.crowdScore}"></div>
-                    </div>
-                </div>
-            `).join('');
-
-            const panel3 = `
-                <div class="panel animate-in delay-2">
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray mb-4">Live Corridors Telemetry</h3>
-                    <div class="vehicles-list">
-                        ${vehiclesHtml}
-                    </div>
-                </div>
-            `;
-
-            // Panel 4: Neural Reasoning
-            const reasoningHtml = data.reasoning.map(r => `
-                <li class="reasoning-item">${r}</li>
-            `).join('');
-
-            const panel4 = `
-                <div class="panel animate-in delay-3">
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray mb-4">Neural Reasoning</h3>
-                    <ul class="reasoning-list">
-                        ${reasoningHtml}
-                    </ul>
-                </div>
-            `;
-
-            // Render all
-            resultsContainer.innerHTML = topPanels + panel3 + panel4;
-            resultsContainer.style.display = 'flex';
-
-            // Trigger progress bar animations after DOM update
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    const bars = document.querySelectorAll('.progress-bar');
-                    bars.forEach(bar => {
-                        const target = bar.getAttribute('data-target');
-                        bar.style.width = `${target}%`;
-                    });
-                }, 100);
-            });
-        }
-    </script>
+    function resetUI() {
+      resultsView.style.display = 'none';
+      errorView.style.display = 'none';
+      loaderView.style.display = 'none';
+      loaderView.style.opacity = '0';
+      inputView.style.display = 'block';
+      inputView.style.opacity = '1';
+      document.getElementById('time').value = new Date().toTimeString().slice(0, 5);
+      document.getElementById('stop').focus();
+    }
+  </script>
 </body>
+
 </html>
