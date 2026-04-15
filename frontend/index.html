@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaitWise | AI Commute Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --surface-color: rgba(25, 25, 25, 0.6);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ededed;
+            --text-secondary: #a1a1aa;
+            --brand-color: #3b82f6;
+            --brand-glow: rgba(59, 130, 246, 0.3);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --panel-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 0%, rgba(20, 30, 50, 0.5) 0%, transparent 60%);
+        }
+
+        main {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #ffffff, #a1a1aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .panel {
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--panel-radius);
+            padding: 24px;
+            backdrop-filter: blur(12px);
+            opacity: 1;
+        }
+
+        /* Form */
+        form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            form { grid-template-columns: 1fr; }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--surface-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        /* Hide clock icon in webkit */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        input:focus {
+            border-color: var(--brand-color);
+            box-shadow: 0 0 0 3px var(--brand-glow);
+        }
+
+        button {
+            grid-column: 1 / -1;
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px var(--brand-glow);
+            margin-top: 8px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            background: #2563eb;
+            box-shadow: 0 6px 20px var(--brand-glow);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading State */
+        #loader-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+            min-height: 200px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--brand-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        #loader-msgs {
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+            text-align: center;
+            width: 100%;
+        }
+
+        .loader-msg {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            position: absolute;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+
+        .loader-msg.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Results Panels */
+        #results-container {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .animate-in {
+            animation: slideFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* Multi-Panel Grid for Top Data */
+        .verdict-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 600px) {
+            .verdict-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Panel 2: Vehicles List */
+        .vehicles-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .vehicle-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vehicle-item.recommended {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.05);
+        }
+
+        .veh-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .veh-title {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success { background: rgba(16,185,129,0.15); color: #34d399; }
+        .badge-warning { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .badge-danger { background: rgba(239,68,68,0.15); color: #f87171; }
+
+        .veh-meta {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            display: flex;
+            gap: 16px;
+        }
+
+        .progress-bg {
+            height: 6px;
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%; /* Initial state for animation */
+            border-radius: 8px;
+            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s;
+        }
+
+        /* Panel 4: Neural Reasoning */
+        .reasoning-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .reasoning-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #d4d4d8;
+        }
+
+        .reasoning-item::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--brand-color);
+            margin-top: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px var(--brand-color);
+        }
+
+        /* Animations */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes slideFadeUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Utilities */
+        .txt-success { color: #34d399; }
+        .txt-warning { color: #fbbf24; }
+        .txt-danger { color: #f87171; }
+        .text-sm { font-size: 0.85rem; }
+        .text-3xl { font-size: 2rem; font-weight: 700; margin-top: 4px; }
+        .text-gray { color: var(--text-secondary); }
+        .mb-4 { margin-bottom: 16px; }
+
+        /* Error state */
+        #error-msg {
+            color: var(--danger);
+            display: none;
+            text-align: center;
+            padding: 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: var(--panel-radius);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <header>
+            <h1>WaitWise</h1>
+            <p>AI boarding intelligence for urban commuters.</p>
+        </header>
+
+        <form id="analyze-form" class="panel">
+            <div class="input-group">
+                <label for="stop">Transit Stop</label>
+                <input type="text" id="stop" placeholder="e.g. MG Road Metro" required>
+            </div>
+            <div class="input-group">
+                <label for="route">Route ID</label>
+                <input type="text" id="route" placeholder="e.g. Green Line Bus 47" required>
+            </div>
+            <div class="input-group">
+                <label for="time">Commute Time</label>
+                <input type="time" id="time" required>
+            </div>
+            <button type="submit" id="submit-btn" aria-live="polite">Analyze Next Vehicles</button>
+        </form>
+
+        <div id="error-msg"></div>
+
+        <div id="loader-container">
+            <div class="spinner"></div>
+            <div id="loader-msgs">
+                <div class="loader-msg" id="msg-1">Fetching live telemetry from transit nodes...</div>
+                <div class="loader-msg" id="msg-2">Analyzing passenger density vectors...</div>
+                <div class="loader-msg" id="msg-3">Computing patience payoff matrices...</div>
+            </div>
+        </div>
+
+        <div id="results-container">
+            <!-- Dynamically populated panels -->
+        </div>
+
+    </main>
+
+    <script>
+        // Set default time to current time
+        const timeInput = document.getElementById('time');
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        timeInput.value = `${hours}:${minutes}`;
+
+        document.getElementById('analyze-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const stop = document.getElementById('stop').value;
+            const route = document.getElementById('route').value;
+            const time = document.getElementById('time').value;
+
+            const submitBtn = document.getElementById('submit-btn');
+            const errorMsg = document.getElementById('error-msg');
+            const loaderContainer = document.getElementById('loader-container');
+            const resultsContainer = document.getElementById('results-container');
+
+            // Reset UI
+            errorMsg.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Analyzing Data...';
+            loaderContainer.style.display = 'flex';
+
+            // Loading state staggered messages (ensure feeling alive)
+            const msg1 = document.getElementById('msg-1');
+            const msg2 = document.getElementById('msg-2');
+            const msg3 = document.getElementById('msg-3');
+
+            msg1.classList.remove('active');
+            msg2.classList.remove('active');
+            msg3.classList.remove('active');
+
+            setTimeout(() => msg1.classList.add('active'), 0);
+            setTimeout(() => { msg1.classList.remove('active'); msg2.classList.add('active'); }, 600);
+            setTimeout(() => { msg2.classList.remove('active'); msg3.classList.add('active'); }, 1400);
+
+            try {
+                // Determine API URL based on host
+                const apiUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                    ? 'http://localhost:3000/api/analyze' 
+                    : '/api/analyze'; 
+                // Fallback direct for testing, waitwise logic applies here
+                const finalUrl = 'http://localhost:3000/api/analyze';
+
+                const response = await fetch(finalUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stop, route, time })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to analyze commute details.');
+                }
+
+                const data = await response.json();
+
+                // Wait 2000ms total to allow all 3 loader messages to show and feel intelligent
+                setTimeout(() => {
+                    loaderContainer.style.display = 'none';
+                    renderResults(data);
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Run Analysis Again';
+                }, 2000);
+
+            } catch (error) {
+                loaderContainer.style.display = 'none';
+                errorMsg.innerText = error.message || 'An error occurred fetching data from backend.';
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Analyze Next Vehicles';
+            }
+        });
+
+        function getColorClass(tag) {
+            if (tag === 'Comfortable') return 'success';
+            if (tag === 'Moderate') return 'warning';
+            return 'danger';
+        }
+
+        function getHexColor(tag) {
+            if (tag === 'Comfortable') return '#34d399';
+            if (tag === 'Moderate') return '#fbbf24';
+            return '#f87171';
+        }
+
+        function renderResults(data) {
+            const resultsContainer = document.getElementById('results-container');
+            
+            const verdictColor = data.verdict === 'WAIT' ? 'var(--warning)' : 'var(--success)';
+
+            // Panel 1 & 2: Verdict & Patience Payoff
+            const topPanels = `
+                <div class="verdict-grid">
+                    <div class="panel animate-in">
+                        <span class="text-sm text-gray font-bold uppercase tracking-wider">Recommendation</span>
+                        <div class="text-3xl" style="color: ${verdictColor}">${data.verdict}</div>
+                        <div class="text-sm text-gray mt-1">${data.verdict === 'WAIT' ? `Wait ${data.waitSeconds} seconds for optimal vehicle` : 'Board the arriving vehicle immediately'}</div>
+                    </div>
+                    <div class="panel animate-in delay-1">
+                        <span class="text-sm text-gray font-bold uppercase tracking-wider">Patience Payoff</span>
+                        <div class="text-3xl txt-success">${data.patiencePayoff}<span style="font-size: 1.2rem; color: var(--text-secondary)">/100</span></div>
+                        <div class="text-sm text-gray mt-1">Saves est. ${data.timeSavedSeconds}s in entry/exit friction</div>
+                    </div>
+                </div>
+            `;
+
+            // Panel 3: Live Telemetry
+            const vehiclesHtml = data.vehicles.map(v => `
+                <div class="vehicle-item ${v.recommended ? 'recommended' : ''}">
+                    <div class="veh-header">
+                        <span class="veh-title">
+                            ${v.label} 
+                            ${v.recommended ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>` : ''}
+                        </span>
+                        <span class="badge badge-${getColorClass(v.tag)}">${v.tag}</span>
+                    </div>
+                    <div class="veh-meta">
+                        <span>Arr: ${v.arrivesInMin}m</span>
+                        <span>Dense: ${v.crowdScore}%</span>
+                        <span>Stress Ix: ${v.stressIndex}</span>
+                    </div>
+                    <div class="progress-bg">
+                        <div class="progress-bar" style="background: ${getHexColor(v.tag)};" data-target="${v.crowdScore}"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            const panel3 = `
+                <div class="panel animate-in delay-2">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray mb-4">Live Corridors Telemetry</h3>
+                    <div class="vehicles-list">
+                        ${vehiclesHtml}
+                    </div>
+                </div>
+            `;
+
+            // Panel 4: Neural Reasoning
+            const reasoningHtml = data.reasoning.map(r => `
+                <li class="reasoning-item">${r}</li>
+            `).join('');
+
+            const panel4 = `
+                <div class="panel animate-in delay-3">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray mb-4">Neural Reasoning</h3>
+                    <ul class="reasoning-list">
+                        ${reasoningHtml}
+                    </ul>
+                </div>
+            `;
+
+            // Render all
+            resultsContainer.innerHTML = topPanels + panel3 + panel4;
+            resultsContainer.style.display = 'flex';
+
+            // Trigger progress bar animations after DOM update
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const bars = document.querySelectorAll('.progress-bar');
+                    bars.forEach(bar => {
+                        const target = bar.getAttribute('data-target');
+                        bar.style.width = `${target}%`;
+                    });
+                }, 100);
+            });
+        }
+    </script>
+</body>
+</html>
