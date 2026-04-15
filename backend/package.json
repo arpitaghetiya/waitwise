@@ -1,14 +1,42 @@
 {
   "name": "waitwise-backend",
-  "version": "1.0.0",
-  "description": "WaitWise API",
+  "version": "2.0.0",
+  "description": "WaitWise AI boarding intelligence — backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "jest --coverage --forceExit",
+    "test:watch": "jest --watch",
+    "lint": "eslint . --ext .js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageThreshold": {
+      "global": {
+        "lines": 80,
+        "functions": 80,
+        "branches": 70,
+        "statements": 80
+      }
+    },
+    "collectCoverageFrom": [
+      "lib/**/*.js",
+      "server.js",
+      "!node_modules/**"
+    ]
   },
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^4.22.1"
+    "express": "^4.22.1",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
